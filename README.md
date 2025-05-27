@@ -26,7 +26,7 @@ Enable Developer mode (toggle in the top-right corner).
 Click Load unpacked and select the pdf-opener folder you downloaded.
 The extension will appear in your Chrome toolbar.
 
-Usage
+# Usage
 
 Enable the Extension:
 Click the PDF Opener icon in the Chrome toolbar to open the popup.
@@ -39,27 +39,13 @@ Click on any PDF link (e.g., example.com/sample.pdf).
 The extension will cancel the download and open the PDF in a new tab.
 
 
-About the Creator:
+# About the Creator:
 Switch to the About tab in the popup to learn more about the creator and find links to their social profiles.
 
 
+# Directory Structure
+<img width="750" alt="Screenshot 2025-05-27 at 2 10 33 PM" src="https://github.com/user-attachments/assets/6eb315c3-a8a8-4121-877f-f8949667f9f7" />
 
-Screenshots
-(Add screenshots of the popup, Settings tab, and About tab here after publishing. You can capture these by opening the popup in Chrome and taking screenshots.)
-Directory Structure
-pdf-opener/
-├── icons/
-│   ├── icon16.png
-│   ├── icon48.png
-│   ├── icon128.png
-├── images/
-│   ├── your-image.jpg
-├── manifest.json
-├── background.js
-├── popup.html
-├── popup.js
-├── styles.css
-├── README.md
 
 Contributing
 Contributions are welcome! If you’d like to contribute:
