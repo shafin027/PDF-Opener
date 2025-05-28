@@ -53,26 +53,51 @@ function handleDownloadEvent(downloadItem, suggest) {
       console.log('Removed URL from handled set:', url);
     }, TIMEOUT);
 
-    // Check download state before cancelling
+    // Validate downloadId and check download state before cancelling
     chrome.downloads.search({ id: downloadItem.id }, (results) => {
-      if (results.length === 0 || results[0].state !== 'in_progress') {
-        console.log('Download is not in progress, cannot cancel:', downloadItem.id);
+      if (chrome.runtime.lastError) {
+        console.error('Error searching for download:', chrome.runtime.lastError.message);
+        return;
+      }
+
+      if (results.length === 0) {
+        console.error(`Download ID ${downloadItem.id} not found. It may have been removed or completed.`);
+        return;
+      }
+
+      const download = results[0];
+      if (download.state !== 'in_progress') {
+        console.log(`Download ${downloadItem.id} is not in progress (state: ${download.state}), cannot cancel.`);
         return;
       }
 
       // Cancel the download and open in the same tab
       chrome.downloads.cancel(downloadItem.id, () => {
         if (chrome.runtime.lastError) {
-          console.log('Download cancellation failed (already handled):', chrome.runtime.lastError.message);
+          console.error('Failed to cancel download:', chrome.runtime.lastError.message);
           return;
         }
 
+        console.log(`Successfully cancelled download ${downloadItem.id}`);
+
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-          if (tabs.length === 0) {
-            console.log('No active tab found, falling back to new tab');
-            chrome.tabs.create({ url: url, active: true });
+          if (chrome.runtime.lastError) {
+            console.error('Error querying tabs:', chrome.runtime.lastError.message);
             return;
           }
+
+          if (tabs.length === 0) {
+            console.log('No active tab found, falling back to new tab');
+            chrome.tabs.create({ url: url, active: true }, (tab) => {
+              if (chrome.runtime.lastError) {
+                console.error('Error creating tab:', chrome.runtime.lastError.message);
+              } else {
+                console.log('Opened PDF in new tab:', tab.id);
+              }
+            });
+            return;
+          }
+
           const activeTab = tabs[0];
           chrome.tabs.update(activeTab.id, { url: url }, (tab) => {
             if (chrome.runtime.lastError) {
@@ -264,6 +289,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('Opening PDF in the same tab:', url);
 
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (chrome.runtime.lastError) {
+        console.error('Error querying tabs:', chrome.runtime.lastError.message);
+        return;
+      }
+
       if (tabs.length === 0) {
         console.log('No active tab found, falling back to new tab');
         chrome.tabs.create({ url: url, active: true }, (tab) => {
