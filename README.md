@@ -69,15 +69,6 @@ This project is licensed under the MIT License. See the LICENSE file for details
 Author
 Shafin Mahamud  
 
-A Computer Science and Engineering student at Brac University, passionate about building tools to improve user experiences.  
-Connect with me on:
-LinkedIn
-GitHub
-Facebook
-YouTube
-
-
-
 
 Last updated: May 27, 2025
 
