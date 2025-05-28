@@ -1,81 +1,99 @@
-// popup.js
 document.addEventListener('DOMContentLoaded', () => {
-  const settingsTabButton = document.getElementById('settingsTab');
-  const aboutTabButton = document.getElementById('aboutTab');
-  const settingsContent = document.getElementById('settingsContent');
-  const aboutContent = document.getElementById('aboutContent');
+  const toggleSwitch = document.getElementById('toggle');
+  const toggleStatus = document.getElementById('toggle-status');
 
-  // Basic check if elements exist
-  if (!settingsTabButton || !aboutTabButton || !settingsContent || !aboutContent) {
-    console.error('PDF Opener: One or more tab UI elements are missing!');
+  if (!toggleSwitch) {
+    console.error('Toggle switch element not found. Check popup.html for ID "toggle".');
     return;
   }
 
-  const tabInfo = [
-    { button: settingsTabButton, content: settingsContent, id: 'settings' },
-    { button: aboutTabButton, content: aboutContent, id: 'about' }
-  ];
-
-  function showTab(tabIdToShow) {
-    tabInfo.forEach(tab => {
-      const isTargetTab = tab.id === tabIdToShow;
-      
-      // Show/Hide Content based on '.hidden' class
-      // Your styles.css '.tab-content.hidden' will apply display:none
-      if (isTargetTab) {
-        tab.content.classList.remove('hidden');
-      } else {
-        tab.content.classList.add('hidden');
-      }
-
-      // Set active class on button
-      // Your styles.css '.tab-button.active' will style it
-      if (isTargetTab) {
-        tab.button.classList.add('active');
-      } else {
-        tab.button.classList.remove('active');
-      }
-    });
+  if (!toggleStatus) {
+    console.error('Toggle status element not found. Check popup.html for ID "toggle-status".');
+    return;
   }
 
-  // Add click event listeners to tab buttons
-  settingsTabButton.addEventListener('click', () => showTab('settings'));
-  aboutTabButton.addEventListener('click', () => showTab('about'));
+  // Function to update the status text
+  const updateStatusText = (isEnabled) => {
+    toggleStatus.textContent = isEnabled ? 'Enabled' : 'Disabled';
+    toggleStatus.className = `text-[10px] font-semibold mb-1 ${isEnabled ? 'text-green-600' : 'text-red-600'}`;
+  };
 
-  // Determine and show initial tab based on HTML 'active' class or default
-  let initialTab = 'settings'; // Default to 'settings'
-  if (settingsTabButton.classList.contains('active')) {
-    initialTab = 'settings';
-  } else if (aboutTabButton.classList.contains('active')) { // If you change default in HTML
-    initialTab = 'about';
-  }
-  showTab(initialTab); // Initialize the view
+  let port = null;
 
-  // --- Your Toggle Switch Logic (from previous good version) ---
-  const toggle = document.getElementById('toggle');
-  const toggleStatus = document.getElementById('toggle-status');
-
-  if (toggle && toggleStatus) {
-    // Load saved state for the toggle
-    chrome.storage.local.get(['pdfOpenerEnabled'], function(result) {
-      const isEnabled = result.pdfOpenerEnabled !== false; // Default to true if not set
-      toggle.checked = isEnabled;
-      updateStatusText(isEnabled);
-    });
-
-    toggle.addEventListener('change', function() {
-      const isEnabled = this.checked;
-      chrome.storage.local.set({pdfOpenerEnabled: isEnabled}, function() {
-        updateStatusText(isEnabled);
-      });
-    });
-
-    function updateStatusText(isEnabled) {
-      toggleStatus.textContent = isEnabled ? 'Enabled' : 'Disabled';
-      // Ensure Tailwind classes are available for these colors
-      toggleStatus.className = `text-[10px] font-semibold mb-1 ${isEnabled ? 'text-green-600' : 'text-red-600'}`;
+  // Function to establish or reconnect the port
+  const connectToBackground = () => {
+    if (port && port.onDisconnect) {
+      port.disconnect();
     }
-  } else {
-    console.warn("PDF Opener: Toggle switch or status element not found in popup.html.");
-  }
+    port = chrome.runtime.connect({ name: 'popupPort' });
+
+    port.onMessage.addListener((message) => {
+      console.log('Received response from background:', message);
+    });
+
+    port.onDisconnect.addListener(() => {
+      console.error('Connection to background script disconnected. Attempting to reconnect...');
+      port = null;
+      setTimeout(connectToBackground, 1000); // Retry after 1 second
+    });
+
+    // Send initial state or wake-up message
+    chrome.storage.sync.get(['pdfOpenerEnabled'], (result) => {
+      const isEnabled = result.pdfOpenerEnabled !== false;
+      toggleSwitch.checked = isEnabled;
+      updateStatusText(isEnabled);
+      console.log('Initial toggle state loaded:', isEnabled);
+      if (port) {
+        port.postMessage({ action: 'initState', enabled: isEnabled });
+      } else {
+        // Fallback: Send a wake-up message
+        chrome.runtime.sendMessage({ action: 'wakeUp' }, () => {
+          if (chrome.runtime.lastError) {
+            console.error('Wake-up message failed:', chrome.runtime.lastError.message);
+          } else {
+            console.log('Sent wake-up message, retrying connection...');
+            setTimeout(connectToBackground, 500); // Retry after 0.5 seconds
+          }
+        });
+      }
+    });
+  };
+
+  // Initial connection attempt
+  connectToBackground();
+
+  // Update state when toggle changes
+  toggleSwitch.addEventListener('change', () => {
+    const isEnabled = toggleSwitch.checked;
+    chrome.storage.sync.set({ pdfOpenerEnabled: isEnabled }, () => {
+      console.log('PDF Opener toggled to:', isEnabled);
+      updateStatusText(isEnabled);
+      if (port) {
+        port.postMessage({ action: 'updateState', enabled: isEnabled });
+      } else {
+        console.error('No port available, state update delayed until connection.');
+        connectToBackground(); // Attempt to reconnect and send update
+      }
+    });
+  });
+
+  // Tab switching logic
+  const settingsTab = document.getElementById('settingsTab');
+  const aboutTab = document.getElementById('aboutTab');
+  const settingsContent = document.getElementById('settingsContent');
+  const aboutContent = document.getElementById('aboutContent');
+
+  settingsTab.addEventListener('click', () => {
+    settingsTab.classList.add('active');
+    aboutTab.classList.remove('active');
+    settingsContent.classList.remove('hidden');
+    aboutContent.classList.add('hidden');
+  });
+
+  aboutTab.addEventListener('click', () => {
+    aboutTab.classList.add('active');
+    settingsTab.classList.remove('active');
+    aboutContent.classList.remove('hidden');
+    settingsContent.classList.add('hidden');
+  });
 });
