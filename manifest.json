@@ -10,8 +10,21 @@
     "activeTab",
     "windows"
   ],
+  "content_scripts": [
+    {
+      "matches": ["*://connect.bracu.ac.bd/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js"],
+      "matches": ["*://connect.bracu.ac.bd/*"]
+    }
+  ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "action": {
     "default_popup": "popup.html",
