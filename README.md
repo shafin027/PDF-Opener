@@ -4,22 +4,12 @@
 PDF Opener is a lightweight Chrome extension that enhances your browsing experience by opening PDF files in a new tab instead of downloading them. This is particularly useful for users who prefer to view PDFs directly in the browser without cluttering their downloads folder.
 Features
 
-Open PDFs in New Tab: Automatically opens PDF links in a new tab instead of downloading them.
+Open PDFs : Automatically opens PDF instead of downloading them.
 Toggle Functionality: Enable or disable the feature via a simple toggle in the extension popup.
 User-Friendly Interface: Clean and modern popup design with Settings and About tabs.
 Lightweight: Minimal permissions and small footprint for fast performance.
 
 # Installation
-From the Chrome Web Store
-
-Visit the Chrome Web Store page for PDF Opener (replace with the actual link once published).
-Click Add to Chrome and confirm by clicking Add Extension in the prompt.
-The extension icon will appear in your Chrome toolbar.
-
-From Source (GitHub)
-
-Clone or download the repository from GitHub:git clone https://github.com/shafin027/pdf-opener.git
-
 
 Open Chrome and navigate to chrome://extensions/.
 Enable Developer mode (toggle in the top-right corner).
@@ -36,7 +26,7 @@ Reload any open tabs for the changes to take effect.
 
 Open a PDF:
 Click on any PDF link (e.g., example.com/sample.pdf).
-The extension will cancel the download and open the PDF in a new tab.
+The extension will cancel the download and open the PDF in the existing tab.
 
 
 # About the Creator:
